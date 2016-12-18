@@ -35,10 +35,22 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
+deleted=$(jq -r '.deleted' < $event)
+if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
+    echo "Repository was just deleted. Nothing to do."
+    echo '[]' >&3
+    exit 0
+fi
+
 branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before' < $event)
 after=$(jq -r '.after' < $event)
+
+range="${before}..${after}"
+if [ "${before}" == "0000000000000000000000000000000000000000" ]; then
+    range="${after}"
+fi
 
 # destination directory as $1
 destination=${1}
@@ -53,7 +65,7 @@ else
     cd $destination
 fi
 
-git log --oneline $before..$after
+git log --oneline $range
 git checkout $after
 
 cp $event ./event.json

@@ -27,10 +27,22 @@ if [ $? != 0 ]; then
     exit 0
 fi
 
+deleted=$(jq -r '.deleted' < $event)
+if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
+    echo "Repository was just deleted. Nothing to do."
+    echo '[]' >&3
+    exit 0
+fi
+
 branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before' < $event)
 after=$(jq -r '.after' < $event)
+
+range="${before}..${after}"
+if [ "${before}" == "0000000000000000000000000000000000000000" ]; then
+    range="${after}"
+fi
 
 destination=$TMPDIR/git-event-resource-repo-cache
 echo -e "machine $GITHUB_HOST\n  login $GH_TOKEN\n  password x-oauth-basic\n  protocol https" >> ~/.netrc
@@ -46,9 +58,9 @@ else
     cd $destination
 fi
 
-git log --oneline $before..$after
+git log --oneline $range
 git checkout $after
 
 {
-    git log --format='%H' $before..$after
+    git log --format='%H' $range
 } | jq -R '.' | jq -s "map({ref: .})" >&3
