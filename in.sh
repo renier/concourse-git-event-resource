@@ -57,7 +57,7 @@ fi
 destination=${1}
 if [ -d $destination/.git ]; then
     cd $destination
-    git fetch
+    git fetch origin $branch
     git reset --hard FETCH_HEAD
 else
     branchflag="--branch $branch"
