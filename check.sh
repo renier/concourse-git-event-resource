@@ -17,20 +17,29 @@ GITHUB_HOST=$(jq -r '.source.github_host // "github.com"' < $payload)
 QUEUE_ADDR=$(jq -r '.source.queue_addr // ""' < $payload)
 [ -z "${QUEUE_ADDR}" ] && QUEUE_ADDR="${default_queue}"
 QUEUE_NAME=$(jq -r '.source.queue_name // ""' < $payload)
+ref=$(jq -r '.version.ref // ""' < $payload)
 
 echo "Checking push event queue..."
 event=$TMPDIR/push-event
 pop $QUEUE_ADDR ${QUEUE_NAME}/peek > $event
 if [ $? != 0 ]; then
     echo "Nothing in the $QUEUE_NAME queue"
-    echo '[]' >&3
+    if [ "$ref" == "" ]; then
+        echo '[]' >&3
+    else
+        echo "[{\"ref\":\"$ref\"}]"
+    fi
     exit 0
 fi
 
 deleted=$(jq -r '.deleted' < $event)
 if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     echo "Repository was just deleted. Nothing to do."
-    echo '[]' >&3
+    if [ "$ref" == "" ]; then
+        echo '[]' >&3
+    else
+        echo "[{\"ref\":\"$ref\"}]"
+    fi
     exit 0
 fi
 

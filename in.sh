@@ -16,6 +16,7 @@ payload=$(mktemp $TMPDIR/resource-in.XXXXXX)
 # source, version.ref, params
 cat > $payload <&0
 
+ref=$(jq -r '.version.ref // ""' < $payload)
 GH_TOKEN=$(jq -r '.source.gh_token // ""' < $payload)
 GITHUB_HOST=$(jq -r '.source.github_host // "github.com"' < $payload)
 echo -e "machine $GITHUB_HOST\n  login $GH_TOKEN\n  password x-oauth-basic\n  protocol https" >> ~/.netrc
@@ -31,14 +32,14 @@ event=$(mktemp $TMPDIR/push-event.XXXXXX)
 pop $QUEUE_ADDR $QUEUE_NAME > $event
 if [ $? != 0 ]; then
     echo "Nothing in the $QUEUE_NAME queue, though it was expected to have something"
-    echo "{\"version\":{\"ref\":\"$ref\"}}" >&3
+    echo "{}" >&3
     exit 1
 fi
 
 deleted=$(jq -r '.deleted' < $event)
 if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     echo "Repository was just deleted. Nothing to do."
-    echo '[]' >&3
+    echo "{\"version\":{\"ref\":\"$ref\"}}" >&3
     exit 0
 fi
 
