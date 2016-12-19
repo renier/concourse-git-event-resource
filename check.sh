@@ -27,7 +27,7 @@ if [[ $? -ne 0 ]]; then
     if [ "$ref" == "" ]; then
         echo '[]' >&3
     else
-        echo "[{\"ref\":\"$ref\"}]"
+        echo "[{\"ref\":\"$ref\"}]" >&3
     fi
     exit 0
 fi
@@ -38,7 +38,7 @@ if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     if [ "$ref" == "" ]; then
         echo '[]' >&3
     else
-        echo "[{\"ref\":\"$ref\"}]"
+        echo "[{\"ref\":\"$ref\"}]" >&3
     fi
     exit 0
 fi
