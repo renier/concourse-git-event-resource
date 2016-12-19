@@ -22,7 +22,7 @@ ref=$(jq -r '.version.ref // ""' < $payload)
 echo "Checking push event queue..."
 event=$TMPDIR/push-event
 pop $QUEUE_ADDR ${QUEUE_NAME}/peek > $event
-if [ $? != 0 ]; then
+if [[ $? -ne 0 ]]; then
     echo "Nothing in the $QUEUE_NAME queue"
     if [ "$ref" == "" ]; then
         echo '[]' >&3

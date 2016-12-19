@@ -30,7 +30,7 @@ ref=$(jq -r '.version.ref' < $payload)
 echo "Checking push event queue..."
 event=$(mktemp $TMPDIR/push-event.XXXXXX)
 pop $QUEUE_ADDR $QUEUE_NAME > $event
-if [ $? != 0 ]; then
+if [[ $? -ne 0 ]]; then
     echo "Nothing in the $QUEUE_NAME queue, though it was expected to have something"
     echo "{}" >&3
     exit 1
