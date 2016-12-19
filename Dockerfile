@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add --no-cache bash jq
+RUN apk add --no-cache git bash jq
 
 COPY pop /usr/bin/pop
 COPY check.sh /opt/resource/check
