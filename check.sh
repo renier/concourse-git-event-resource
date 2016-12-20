@@ -8,7 +8,7 @@ exec 1>&2 # redirect all output to stderr for logging
 PATH=/usr/local/bin:$PATH
 
 default_queue="$(ip route | awk '/default/ { print $3 }'):22133"
-payload=$TMPDIR/git-event-resource-request
+payload=$(mktemp $TMPDIR/resource-check.XXXXXX)
 
 cat > $payload <&0
 
@@ -20,7 +20,7 @@ QUEUE_NAME=$(jq -r '.source.queue_name // ""' < $payload)
 ref=$(jq -r '.version.ref // ""' < $payload)
 
 echo "Checking push event queue..."
-event=$TMPDIR/push-event
+event=$(mktemp $TMPDIR/resource-event.XXXXXX)
 pop $QUEUE_ADDR ${QUEUE_NAME}/peek > $event
 if [[ $? -ne 0 ]]; then
     echo "Nothing in the $QUEUE_NAME queue"
