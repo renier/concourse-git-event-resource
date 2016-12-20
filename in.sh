@@ -25,8 +25,6 @@ QUEUE_ADDR=$(jq -r '.source.queue_addr // ""' < $payload)
 [ -z "${QUEUE_ADDR}" ] && QUEUE_ADDR="${default_queue}"
 QUEUE_NAME=$(jq -r '.source.queue_name // ""' < $payload)
 
-ref=$(jq -r '.version.ref' < $payload)
-
 echo "Checking push event queue..."
 event=$(mktemp $TMPDIR/push-event.XXXXXX)
 pop $QUEUE_ADDR $QUEUE_NAME > $event

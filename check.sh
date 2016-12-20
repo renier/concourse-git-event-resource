@@ -38,7 +38,11 @@ if [ "${ref_type}" != "" ]; then
     event_ref=$(jq -r '.ref' < $event)
     echo "Ignoring ${ref_type} event: ${event_ref}"
     pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
-    echo "[{\"ref\":\"$ref\"}]" >&3 # say no new updates found
+    if [ "$ref" == "" ]; then
+        echo '[]' >&3
+    else
+        echo "[{\"ref\":\"$ref\"}]" >&3
+    fi
     exit 0
 fi
 
