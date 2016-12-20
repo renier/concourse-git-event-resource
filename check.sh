@@ -44,7 +44,8 @@ fi
 
 deleted=$(jq -r '.deleted' < $event)
 if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
-    echo "Repository was just deleted. Nothing to do."
+    echo "Repository or branch was deleted. Nothing to do."
+    pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
     if [ "$ref" == "" ]; then
         echo '[]' >&3
     else
