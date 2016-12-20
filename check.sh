@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set +e
 exec 3>&1 # make stdout available as fd 3 for the result
 exec 1>&2 # redirect all output to stderr for logging
 
@@ -31,6 +31,7 @@ if [[ $? -ne 0 ]]; then
     fi
     exit 0
 fi
+set -e
 
 # Ignore create/delete events
 ref_type=$(jq -r '.ref_type // ""' < $event)
