@@ -32,6 +32,16 @@ if [[ $? -ne 0 ]]; then
     exit 0
 fi
 
+# Ignore create/delete events
+ref_type=$(jq -r '.ref_type // ""' < $event)
+if [ "${ref_type}" != "" ]; then
+    event_ref=$(jq -r '.ref' < $event)
+    echo "Ignoring ${ref_type} event: ${event_ref}"
+    pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
+    echo "[{\"ref\":\"$ref\"}]" >&3 # say no new updates found
+    exit 0
+fi
+
 deleted=$(jq -r '.deleted' < $event)
 if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     echo "Repository was just deleted. Nothing to do."
