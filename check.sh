@@ -58,7 +58,7 @@ echo -e "machine $GITHUB_HOST\n  login $GH_TOKEN\n  password x-oauth-basic\n  pr
 
 if [ -d $destination ]; then
     cd $destination
-    git fetch
+    git fetch origin $branch
     git reset --hard FETCH_HEAD
 else
     branchflag="--branch $branch"
