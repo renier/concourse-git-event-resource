@@ -63,6 +63,12 @@ branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before' < $event)
 after=$(jq -r '.after' < $event)
+if [ "${ref}" == "${after}" ]; then
+    echo "No new versions"
+    pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
+    echo "[{\"ref\":\"$ref\"}]" >&3
+    exit 0
+fi
 
 range="${before}..${after}"
 if [ "${before}" == "0000000000000000000000000000000000000000" ]; then
