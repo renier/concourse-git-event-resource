@@ -35,9 +35,9 @@ set -e
 
 # Ignore create/delete events
 ref_type=$(jq -r '.ref_type // ""' < $event)
-if [ "${ref_type}" != "" ]; then
-    event_ref=$(jq -r '.ref' < $event)
-    echo "Ignoring ${ref_type} event: ${event_ref}"
+event_ref=$(jq -r '.ref // ""' < $event)
+if [ "${ref_type}" == "repository" ] || [ "${ref_type}" == "branch" ]; then
+    echo "Ignoring ${ref_type} event ${event_ref}"
     pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
     if [ "$ref" == "" ]; then
         echo '[]' >&3
@@ -47,7 +47,19 @@ if [ "${ref_type}" != "" ]; then
     exit 0
 fi
 
+branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
+before=$(jq -r '.before' < $event)
+after=$(jq -r '.after' < $event)
+
 deleted=$(jq -r '.deleted' < $event)
+master_branch=$(jq -r '.master_branch // ""' < $event)
+if [ "${ref_type}" == "tag" ] && [ "${master_branch}" != "" ]; then
+    deleted="false"
+    branch="${master_branch}"
+    before="${event_ref}~1"
+    after="${event_ref}"
+fi
+
 if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     echo "Repository or branch was deleted. Nothing to do."
     pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
@@ -59,10 +71,8 @@ if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     exit 0
 fi
 
-branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
-before=$(jq -r '.before' < $event)
-after=$(jq -r '.after' < $event)
+
 if [ "${ref}" == "${after}" ]; then
     echo "No new versions"
     pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
