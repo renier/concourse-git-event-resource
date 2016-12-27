@@ -48,7 +48,10 @@ after=$(jq -r '.after' < $event)
 
 range="${before}..${after}"
 if [ "${before}" == "0000000000000000000000000000000000000000" ]; then
-    range="${after}"
+    before=$(jq -r '.commits[0].id // ""' < $event)
+    if [ -z "${before}" ] || [ "${before}" == "${after}" ]; then
+        range="${after}"
+    fi
 fi
 
 # destination directory as $1
