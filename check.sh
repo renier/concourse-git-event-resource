@@ -78,16 +78,30 @@ fi
 destination=$TMPDIR/git-event-resource-repo-cache
 echo -e "machine $GITHUB_HOST\n  login $GH_TOKEN\n  password x-oauth-basic\n  protocol https" >> ~/.netrc
 
+set +e
 if [ -d $destination ]; then
     cd $destination
     git fetch origin $branch
+    if [[ $? -ne 0 ]]; then
+        echo "Fetching from branch $branch failed."
+        pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
+        echo "[{\"ref\":\"$ref\"}]" >&3
+        exit 2
+    fi
     git reset --hard FETCH_HEAD
 else
     branchflag="--branch $branch"
 
     git clone --single-branch $url $branchflag $destination
+    if [[ $? -ne 0 ]]; then
+        echo "Cloning branch $branch failed."
+        pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
+        echo "[{\"ref\":\"$ref\"}]" >&3
+        exit 2
+    fi
     cd $destination
 fi
+set -e
 
 git log --oneline $range
 git checkout $after
