@@ -61,7 +61,7 @@ fi
 
 branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
-before=$(jq -r '.before' < $event)
+before=$(jq -r '.before // ""' < $event)
 after=$(jq -r '.after' < $event)
 if [ "${ref}" == "${after}" ]; then
     echo "No new versions"
@@ -71,8 +71,9 @@ if [ "${ref}" == "${after}" ]; then
 fi
 
 range="${before}..${after}"
-if [ "${before}" == "0000000000000000000000000000000000000000" ]; then
+if [ -z "${before}" ] || [ "${before}" == "0000000000000000000000000000000000000000" ]; then
     before=$(jq -r '.commits[0].id // ""' < $event)
+    [ -z "${before}" ] && before="${ref}"
     if [ -z "${before}" ] || [ "${before}" == "${after}" ]; then
         range="${after}"
     fi
