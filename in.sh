@@ -10,6 +10,8 @@ exec 1>&2 # redirect all output to stderr for logging
 # for jq
 PATH=/usr/local/bin:$PATH
 
+ZERO="0000000000000000000000000000000000000000"
+
 default_queue="$(ip route | awk '/default/ { print $3 }'):22133"
 payload=$(mktemp $TMPDIR/resource-in.XXXXXX)
 
@@ -46,13 +48,21 @@ url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
 after=$(jq -r '.after' < $event)
 
-range="${before}..${after}"
-if [ -z "${before}" ] || [ "${before}" == "0000000000000000000000000000000000000000" ]; then
+if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
     before=$(jq -r '.commits[0].id // ""' < $event)
-    [ -z "${before}" ] && before="${ref}"
-    if [ -z "${before}" ] || [ "${before}" == "${after}" ]; then
-        range="${after}"
+    [ -z "${before}" ] && before=$(jq -r '.head_commit.id // ""' < $event)
+
+    if [ -z "${before}" ]; then
+        before="${ref}"
+    else # tag case
+        after="${before}"
+        before="${after}~1"
     fi
+fi
+
+range="${before}..${after}"
+if [ "${before}" == "${ZERO}" ] || [ -z "${before}" ]; then
+    range="${after}"
 fi
 
 # destination directory as $1
