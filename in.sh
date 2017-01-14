@@ -44,22 +44,21 @@ if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
 fi
 
 branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
+[[ "$branch" == *"/tags/"* ]] && TAG=1
 branch=$(echo $branch | sed -e 's/refs\/tags\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
 after=$(jq -r '.after' < $event)
+[ -n "$TAG" ] && after="$branch"
 
 if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
     before=$(jq -r '.commits[0].id // ""' < $event)
 
-    if [ -z "${before}" ]; then
-        before=$(jq -r '.head_commit.id // ""' < $event)
-
-        if [ -z "${before}" ]; then
-            before="${ref}"
-        else # tag case
-            after="${before}"
+    if [ -z "${before}" ]; then # a new tag?
+        if [ -n "$TAG" ]; then
             before="${after}~1"
+        else
+            before="${ref}"
         fi
     fi
 fi

@@ -67,7 +67,8 @@ branch=$(echo $branch | sed -e 's/refs\/tags\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
 after=$(jq -r '.after' < $event)
-if [ -z "$TAG" ] && [ "${ref}" == "${after}" ]; then
+[ -n "$TAG" ] && after="$branch"
+if [ "${ref}" == "${after}" ]; then
     echo "No new versions"
     pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
     echo "[{\"ref\":\"$ref\"}]" >&3
@@ -77,14 +78,11 @@ fi
 if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
     before=$(jq -r '.commits[0].id // ""' < $event)
 
-    if [ -z "${before}" ]; then
-        before=$(jq -r '.head_commit.id // ""' < $event)
-
-        if [ -z "${before}" ]; then
-            before="${ref}"
-        else # tag case
-            after="${before}"
+    if [ -z "${before}" ]; then # a new tag?
+        if [ -n "$TAG" ]; then
             before="${after}~1"
+        else
+            before="${ref}"
         fi
     fi
 fi
@@ -124,6 +122,11 @@ set -e
 
 git log --oneline $range
 git checkout $after
+
+if [ -n "$TAG" ]; then
+    echo "[{\"ref\":\"$branch\"}]" >&3
+    exit 0
+fi
 
 {
     git log --format='%H' $range
