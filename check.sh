@@ -62,10 +62,12 @@ if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
 fi
 
 branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
+[[ "$branch" == *"/tags/"* ]] && TAG=1
+branch=$(echo $branch | sed -e 's/refs\/tags\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
 after=$(jq -r '.after' < $event)
-if [ "${ref}" == "${after}" ]; then
+if [ -z "$TAG" ] && [ "${ref}" == "${after}" ]; then
     echo "No new versions"
     pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
     echo "[{\"ref\":\"$ref\"}]" >&3
@@ -74,13 +76,16 @@ fi
 
 if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
     before=$(jq -r '.commits[0].id // ""' < $event)
-    [ -z "${before}" ] && before=$(jq -r '.head_commit.id // ""' < $event)
 
     if [ -z "${before}" ]; then
-        before="${ref}"
-    else # tag case
-        after="${before}"
-        before="${after}~1"
+        before=$(jq -r '.head_commit.id // ""' < $event)
+
+        if [ -z "${before}" ]; then
+            before="${ref}"
+        else # tag case
+            after="${before}"
+            before="${after}~1"
+        fi
     fi
 fi
 
