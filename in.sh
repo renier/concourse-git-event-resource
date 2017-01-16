@@ -66,7 +66,7 @@ if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
 fi
 
 range="${before}..${after}"
-if [ "${before}" == "${ZERO}" ] || [ -z "${before}" ] || [ "$before" == "$after"]; then
+if [ "${before}" == "${ZERO}" ] || [ -z "${before}" ] || [ "$before" == "$after" ]; then
     range="${after}~1..${after}"
 fi
 

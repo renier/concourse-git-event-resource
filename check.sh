@@ -70,12 +70,6 @@ before=$(jq -r '.before // ""' < $event)
 [ "$created" == "true" ] && [ "$before" == "$ZERO" ] && TAG=1
 after=$(jq -r '.after' < $event)
 [ -n "$TAG" ] && after="$branch"
-if [ "${ref}" == "${after}" ]; then
-    echo "No new versions"
-    pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
-    echo "[{\"ref\":\"$ref\"}]" >&3
-    exit 0
-fi
 
 if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
     before=$(jq -r '.commits[0].id // ""' < $event)
