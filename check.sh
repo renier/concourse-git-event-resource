@@ -61,11 +61,13 @@ if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
     exit 0
 fi
 
+created=$(jq -r '.created // ""' < $event)
 branch=$(cat $event | jq -r '.ref' | sed -e 's/refs\/heads\///')
 [[ "$branch" == *"/tags/"* ]] && TAG=1
 branch=$(echo $branch | sed -e 's/refs\/tags\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
+[ "$created" == "true" ] && [ "$before" == "$ZERO" ] && TAG=1
 after=$(jq -r '.after' < $event)
 [ -n "$TAG" ] && after="$branch"
 if [ "${ref}" == "${after}" ]; then
@@ -88,8 +90,8 @@ if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
 fi
 
 range="${before}..${after}"
-if [ "${before}" == "${ZERO}" ] || [ -z "${before}" ]; then
-    range="${after}"
+if [ "${before}" == "${ZERO}" ] || [ -z "${before}" ] || [ "$before" == "$after" ]; then
+    range="${after}~1..${after}"
 fi
 
 destination=$TMPDIR/git-event-resource-repo-cache
