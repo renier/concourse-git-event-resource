@@ -50,7 +50,8 @@ branch=$(echo $branch | sed -e 's/refs\/tags\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
 [ "$created" == "true" ] && [ "$before" == "$ZERO" ] && TAG=1
-after=$(jq -r '.after' < $event)
+after_commit=$(jq -r '.after' < $event)
+after="$after_commit"
 [ -n "$TAG" ] && after="$branch"
 
 if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
@@ -74,17 +75,15 @@ fi
 destination=${1}
 if [ -d $destination/.git ]; then
     cd $destination
-    git fetch -t origin $branch
+    git fetch
     git reset --hard FETCH_HEAD
 else
-    branchflag="--branch $branch"
-
-    git clone --single-branch $url $branchflag $destination
+    git clone $url $destination
     cd $destination
 fi
 
 [ -z "$TAG" ] && git log --oneline $range
-git checkout $after
+git checkout $after_commit
 
 cp $event ./event.json
 

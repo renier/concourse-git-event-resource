@@ -68,7 +68,8 @@ branch=$(echo $branch | sed -e 's/refs\/tags\///')
 url=$(jq -r '.repository.clone_url // ""' < $event)
 before=$(jq -r '.before // ""' < $event)
 [ "$created" == "true" ] && [ "$before" == "$ZERO" ] && TAG=1
-after=$(jq -r '.after' < $event)
+after_commit=$(jq -r '.after' < $event)
+after="$after_commit"
 [ -n "$TAG" ] && after="$branch"
 
 if [ -z "${before}" ] || [ "${before}" == "${ZERO}" ]; then
@@ -94,7 +95,7 @@ echo -e "machine $GITHUB_HOST\n  login $GH_TOKEN\n  password x-oauth-basic\n  pr
 set +e
 if [ -d $destination ]; then
     cd $destination
-    git fetch -t origin $branch
+    git fetch
     if [[ $? -ne 0 ]]; then
         echo "Fetching from branch $branch failed."
         pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
@@ -103,9 +104,7 @@ if [ -d $destination ]; then
     fi
     git reset --hard FETCH_HEAD
 else
-    branchflag="--branch $branch"
-
-    git clone --single-branch $url $branchflag $destination
+    git clone $url $destination
     if [[ $? -ne 0 ]]; then
         echo "Cloning branch $branch failed."
         pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
@@ -117,7 +116,7 @@ fi
 set -e
 
 [ -z "$TAG" ] && git log --oneline $range
-git checkout $after
+git checkout $after_commit
 
 if [ -n "$TAG" ]; then
     echo "[{\"ref\":\"$branch\"}]" >&3
