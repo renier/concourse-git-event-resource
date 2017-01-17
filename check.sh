@@ -94,7 +94,7 @@ echo -e "machine $GITHUB_HOST\n  login $GH_TOKEN\n  password x-oauth-basic\n  pr
 set +e
 if [ -d $destination ]; then
     cd $destination
-    git fetch origin $branch
+    git fetch -t origin $branch
     if [[ $? -ne 0 ]]; then
         echo "Fetching from branch $branch failed."
         pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
