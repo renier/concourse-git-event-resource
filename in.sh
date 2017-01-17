@@ -83,7 +83,7 @@ else
     cd $destination
 fi
 
-git log --oneline $range
+[ -z "$TAG" ] && git log --oneline $range
 git checkout $after
 
 cp $event ./event.json

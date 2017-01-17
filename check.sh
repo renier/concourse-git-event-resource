@@ -116,7 +116,7 @@ else
 fi
 set -e
 
-git log --oneline $range
+[ -z "$TAG" ] && git log --oneline $range
 git checkout $after
 
 if [ -n "$TAG" ]; then
