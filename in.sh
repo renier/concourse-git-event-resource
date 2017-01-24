@@ -29,12 +29,14 @@ QUEUE_NAME=$(jq -r '.source.queue_name // ""' < $payload)
 
 echo "Checking push event queue..."
 event=$(mktemp $TMPDIR/push-event.XXXXXX)
+set +e
 pop $QUEUE_ADDR $QUEUE_NAME > $event
 if [[ $? -ne 0 ]]; then
     echo "Nothing in the $QUEUE_NAME queue, though it was expected to have something"
     echo "{}" >&3
     exit 1
 fi
+set -e
 
 deleted=$(jq -r '.deleted' < $event)
 if [ "${deleted}" == "null" ] || [ "${deleted}" == "true" ]; then
