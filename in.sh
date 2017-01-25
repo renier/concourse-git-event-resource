@@ -32,9 +32,12 @@ event=$(mktemp $TMPDIR/push-event.XXXXXX)
 set +e
 pop $QUEUE_ADDR $QUEUE_NAME > $event
 if [[ $? -ne 0 ]]; then
-    echo "Nothing in the $QUEUE_NAME queue, though it was expected to have something"
-    echo "{}" >&3
-    exit 1
+    pop $QUEUE_ADDR $ref > $event # Check queue named after the ref commit
+    if [[ $? -ne 0 ]]; then
+        echo "Nothing in the $QUEUE_NAME queue, though it was expected to have something"
+        echo "{}" >&3
+        exit 1
+    fi
 fi
 set -e
 
@@ -87,6 +90,7 @@ fi
 [ -z "$TAG" ] && git log --oneline $range
 git checkout $after_commit
 
+push $QUEUE_ADDR $after $event 180
 cp $event ./event.json
 
 echo "{\"version\":{\"ref\":\"$after\"}}" >&3
