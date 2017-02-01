@@ -90,6 +90,8 @@ fi
 [ -z "$TAG" ] && git log --oneline $range
 git checkout $after_commit
 
+set +e
+echo "Saving event $after ..."
 push $QUEUE_ADDR $after $event 180
 cp $event ./event.json
 
