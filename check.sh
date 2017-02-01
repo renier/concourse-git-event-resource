@@ -113,10 +113,13 @@ else
     fi
     cd $destination
 fi
-set -e
 
 [ -z "$TAG" ] && git log --oneline $range
 git checkout $after_commit
+if [[ $? -ne 0 ]]; then
+   echo "Checking out $after_commit errored out. Dropping event..."
+   pop $QUEUE_ADDR ${QUEUE_NAME} # remove event from the queue
+fi
 
 if [ -n "$TAG" ]; then
     echo "[{\"ref\":\"$branch\"}]" >&3
